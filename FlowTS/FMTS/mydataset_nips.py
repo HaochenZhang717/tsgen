@@ -109,6 +109,8 @@ configs = load_yaml_config(args.config_path)
 device = torch.device(f'cuda:{args.gpu}' if torch.cuda.is_available() else 'cpu')
 
 model = instantiate_from_config(configs['model']).to(device)
+
+model = torch.compile(model)
 trainer = Trainer(config=configs, args=args, model=model, dataloader={'dataloader': dataloader})
 
 # =========================
