@@ -86,11 +86,21 @@ class MyDataset(Dataset):
 # 4. 训练 dataloader
 # =========================
 train_dataset = MyDataset(train, regular=True)
-dataloader = DataLoader(
+train_dataloader = DataLoader(
     train_dataset,
     batch_size=64,
     shuffle=True,
-    num_workers=4,
+    num_workers=16,
+    drop_last=False,
+    pin_memory=True
+)
+
+valid_dataset = MyDataset(valid, regular=True)
+valid_dataloader = DataLoader(
+    valid_dataset,
+    batch_size=64,
+    shuffle=True,
+    num_workers=16,
     drop_last=False,
     pin_memory=True
 )
@@ -111,7 +121,7 @@ device = torch.device(f'cuda:{args.gpu}' if torch.cuda.is_available() else 'cpu'
 model = instantiate_from_config(configs['model']).to(device)
 
 model = torch.compile(model)
-trainer = Trainer(config=configs, args=args, model=model, dataloader={'dataloader': dataloader})
+trainer = Trainer(config=configs, args=args, model=model, dataloader={'train_dataloader': train_dataloader})
 
 # =========================
 # 6. 训练
