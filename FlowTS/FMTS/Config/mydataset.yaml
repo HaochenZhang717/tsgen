@@ -17,7 +17,7 @@ solver:
   base_lr: 1.0e-5
   max_epochs: 1000
   # results_folder: ./Checkpoints_mydataset_flows
-  gradient_accumulate_every: 2
+  gradient_accumulate_every: 1
   save_cycle: 100
 
   ema:
