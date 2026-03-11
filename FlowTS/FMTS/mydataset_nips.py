@@ -121,7 +121,10 @@ device = torch.device(f'cuda:{args.gpu}' if torch.cuda.is_available() else 'cpu'
 model = instantiate_from_config(configs['model']).to(device)
 
 model = torch.compile(model)
-trainer = Trainer(config=configs, args=args, model=model, dataloader={'train_dataloader': train_dataloader})
+trainer = Trainer(
+    config=configs, args=args, model=model,
+    dataloader={'train_dataloader': train_dataloader, 'valid_dataloader': valid_dataloader},
+    )
 
 # =========================
 # 6. 训练
