@@ -129,17 +129,12 @@ trainer = Trainer(
 # =========================
 # 6. 训练
 # =========================
-trainer.train()
+# trainer.train()
 # trainer.load(1000)
+trainer.load("best")
 
-# =========================
-# 7. forecasting 测试
-# =========================
-_, seq_length, feat_num = test.shape
-pred_length = 24
 
-test_dataset = MyDataset(test, regular=False, pred_length=pred_length)
-real = test_raw.copy()
+test_dataset = MyDataset(test, regular=True)
 
 test_dataloader = DataLoader(
     test_dataset,
@@ -149,51 +144,4 @@ test_dataloader = DataLoader(
     pin_memory=True
 )
 
-sample, *_ = trainer.restore(test_dataloader, shape=[seq_length, feat_num])
-sample = from_neg_one_one(sample)
-
-mask = test_dataset.mask
-mse = mean_squared_error(sample[~mask], real[~mask])
-
-print(f"Forecasting MSE: {mse:.6f}")
-
-log_str_pre = 'mydataset_forecasting ' + ' '.join(
-    f"{k}={v}" for k, v in os.environ.items() if 'hucfg' in k
-)
-with open('log.txt', 'a') as f:
-    f.write(log_str_pre + f" mse={mse}\n")
-
-# =========================
-# 8. 可视化
-# =========================
-import matplotlib.pyplot as plt
-plt.rcParams["font.size"] = 12
-
-num_plot = min(2, test.shape[0])
-for idx in range(num_plot):
-    plt.figure(figsize=(15, 3))
-    plt.plot(
-        range(0, seq_length - pred_length),
-        real[idx, :(seq_length - pred_length), 0],
-        color='c',
-        linestyle='solid',
-        label='History'
-    )
-    plt.plot(
-        range(seq_length - pred_length - 1, seq_length),
-        real[idx, -pred_length - 1:, 0],
-        color='g',
-        linestyle='solid',
-        label='Ground Truth'
-    )
-    plt.plot(
-        range(seq_length - pred_length - 1, seq_length),
-        sample[idx, -pred_length - 1:, 0],
-        color='r',
-        linestyle='solid',
-        label='Prediction'
-    )
-    plt.legend()
-    plt.tight_layout()
-    plt.savefig(f'./mydataset_forecast_{idx}.png')
-    plt.close()
+sample, orig = trainer.restore(test_dataloader)

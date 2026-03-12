@@ -55,6 +55,7 @@ class Trainer:
         path = os.path.join(self.results_folder, f"model-{milestone}.pt")
         data = torch.load(path, map_location=self.device)
         self.model.load_state_dict(data["model"])
+        self.ema_model.load_state_dict(data["ema_model"])
         if "optimizer" in data:
             self.optimizer.load_state_dict(data["optimizer"])
         print(f"Loaded checkpoint from {path}")
@@ -110,7 +111,7 @@ class Trainer:
 
 
     @torch.no_grad()
-    def restore(self, test_dataloader, shape=None):
+    def restore(self, test_dataloader):
         """
         test_dataloader yields (x, mask)
         x: [B, L, D] in [-1,1]
@@ -119,18 +120,21 @@ class Trainer:
         self.model.eval()
 
         all_samples = []
-
+        all_reals = []
         for batch in test_dataloader:
-            x, mask = batch
+            x = batch
             x = x.to(self.device)
-            mask = mask.to(self.device).bool()
-
-            sample = self.ema_model.fast_sample_infill(
-                shape=x.shape,
-                target=x,
-                partial_mask=mask
-            )
+            sample = self.ema_model.generate_mts(batch_size=x.shape[0])
             all_samples.append(sample.detach().cpu())
-
+            all_reals.append(x.detach().cpu())
         all_samples = torch.cat(all_samples, dim=0).numpy()
-        return all_samples, None
+        all_reals = torch.cat(all_reals, dim=0).numpy()
+
+        dict_to_save = {
+            'sample': all_samples,
+            'orig': all_reals,
+        }
+
+        torch.save(dict_to_save, os.path.join(self.results_folder, f"samples.pt"))
+
+        return all_samples, all_reals
