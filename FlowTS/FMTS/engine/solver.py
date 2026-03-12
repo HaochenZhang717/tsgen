@@ -121,7 +121,7 @@ class Trainer:
 
         all_samples = []
         all_reals = []
-        for batch in test_dataloader:
+        for batch in tqdm(test_dataloader):
             x = batch
             x = x.to(self.device)
             sample = self.ema_model.generate_mts(batch_size=x.shape[0])
